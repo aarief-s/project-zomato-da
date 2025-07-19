@@ -296,10 +296,9 @@ else:
     st.markdown("""
     ### 📋 Instructions:
     
-    1. **Upload your CSV file** using the file uploader above
-    2. **Use the sidebar filters** to filter your data
-    3. **Explore different tabs** for various analyses
-    4. **Download filtered results** from the Data Table tab
+     **Download and Upload zomato_delivery_clean_tableau.csv file from github as dataset to uses this app** using the file uploader above
+      **Github : https://github.com/aarief-s/project-zomato-da**
+   
     
     ### 📊 Expected Columns:
     - `Time_taken (min)` - Delivery time
