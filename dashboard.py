@@ -296,8 +296,8 @@ else:
     st.markdown("""
     ### 📋 Instructions:
     
-     **Download and Upload zomato_delivery_clean_tableau.csv file from github as dataset to uses this app** using the file uploader above
-      **Github : https://github.com/aarief-s/project-zomato-da**
+    1. **Download and Upload zomato_delivery_clean_tableau.csv file from github as dataset to uses this app** using the file uploader above
+    2. **Github : https://github.com/aarief-s/project-zomato-da**
    
     
     ### 📊 Expected Columns:
