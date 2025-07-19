@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 # Page configuration
 st.set_page_config(
     page_title="Zomato Delivery Analytics Dashboard",
-    page_icon="",
+    page_icon="🍕",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -33,7 +33,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Title and header
-st.title(" Zomato Delivery Analytics Dashboard")
+st.title("🍕 Zomato Delivery Analytics Dashboard")
 st.markdown("---")
 
 # Load data
@@ -395,6 +395,6 @@ else:
 st.markdown("---")
 st.markdown("""
 <div style='text-align: center'>
-<p> Zomato Delivery Analytics Dashboard | Built with Streamlit</p>
+<p>🍕 Zomato Delivery Analytics Dashboard | Built with Streamlit</p>
 </div>
 """, unsafe_allow_html=True)
