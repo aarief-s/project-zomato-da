@@ -1,400 +1,315 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import warnings
-warnings.filterwarnings('ignore')
 
 # Page configuration
 st.set_page_config(
-    page_title="Zomato Delivery Analytics Dashboard",
+    page_title="Zomato Delivery Dashboard",
     page_icon="🍕",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# Custom CSS
-st.markdown("""
-<style>
-.metric-card {
-    background-color: #f0f2f6;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    border-left: 5px solid #ff6b6b;
-}
-.stMetric > label {
-    font-size: 14px !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# Title and header
+# Title
 st.title("🍕 Zomato Delivery Analytics Dashboard")
 st.markdown("---")
 
-# Load data
-@st.cache_data
-def load_data():
-    try:
-        # Assuming the CSV file is uploaded or available
-        df = pd.read_csv('zomato_delivery_clean_tableau.csv')
-        return df
-    except FileNotFoundError:
-        st.error("Dataset not found. Please upload the CSV file.")
-        return None
-
-# File uploader as fallback
-uploaded_file = st.file_uploader("Upload your Zomato delivery dataset", type=['csv'])
+# File uploader
+uploaded_file = st.file_uploader("📁 Upload your Zomato delivery dataset (CSV)", type=['csv'])
 
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-else:
-    df = load_data()
-
-if df is not None:
-    # Sidebar filters
-    st.sidebar.header("🔍 Filters")
-    
-    # City filter
-    cities = ['All'] + list(df['City'].unique()) if 'City' in df.columns else ['All']
-    selected_city = st.sidebar.selectbox("Select City", cities)
-    
-    # Weather filter
-    weather_options = ['All'] + list(df['Weather_conditions'].unique()) if 'Weather_conditions' in df.columns else ['All']
-    selected_weather = st.sidebar.selectbox("Select Weather", weather_options)
-    
-    # Vehicle type filter
-    vehicle_options = ['All'] + list(df['Type_of_vehicle'].unique()) if 'Type_of_vehicle' in df.columns else ['All']
-    selected_vehicle = st.sidebar.selectbox("Select Vehicle Type", vehicle_options)
-    
-    # Festival filter
-    festival_options = ['All'] + list(df['Festival'].unique()) if 'Festival' in df.columns else ['All']
-    selected_festival = st.sidebar.selectbox("Select Festival", festival_options)
-    
-    # Apply filters
-    filtered_df = df.copy()
-    if selected_city != 'All' and 'City' in df.columns:
-        filtered_df = filtered_df[filtered_df['City'] == selected_city]
-    if selected_weather != 'All' and 'Weather_conditions' in df.columns:
-        filtered_df = filtered_df[filtered_df['Weather_conditions'] == selected_weather]
-    if selected_vehicle != 'All' and 'Type_of_vehicle' in df.columns:
-        filtered_df = filtered_df[filtered_df['Type_of_vehicle'] == selected_vehicle]
-    if selected_festival != 'All' and 'Festival' in df.columns:
-        filtered_df = filtered_df[filtered_df['Festival'] == selected_festival]
-    
-    # Key metrics
-    st.header("📊 Key Metrics")
-    col1, col2, col3, col4, col5 = st.columns(5)
-    
-    with col1:
-        total_deliveries = len(filtered_df)
-        st.metric("Total Deliveries", f"{total_deliveries:,}")
-    
-    with col2:
-        avg_time = filtered_df['Time_taken (min)'].mean() if 'Time_taken (min)' in filtered_df.columns else 0
-        st.metric("Avg Delivery Time", f"{avg_time:.1f} min")
-    
-    with col3:
-        avg_rating = filtered_df['Delivery_person_Ratings'].mean() if 'Delivery_person_Ratings' in filtered_df.columns else 0
-        st.metric("Avg Rating", f"{avg_rating:.2f}")
-    
-    with col4:
-        excellent_deliveries = (filtered_df['delivery_performance'] == 'Excellent').sum() if 'delivery_performance' in filtered_df.columns else 0
-        excellent_pct = (excellent_deliveries / total_deliveries * 100) if total_deliveries > 0 else 0
-        st.metric("Excellent Deliveries", f"{excellent_pct:.1f}%")
-    
-    with col5:
-        high_satisfaction = (filtered_df['customer_satisfaction'] == 'High').sum() if 'customer_satisfaction' in filtered_df.columns else 0
-        satisfaction_pct = (high_satisfaction / total_deliveries * 100) if total_deliveries > 0 else 0
-        st.metric("High Satisfaction", f"{satisfaction_pct:.1f}%")
-    
-    st.markdown("---")
-    
-    # Main dashboard content
-    tab1, tab2, tab3, tab4 = st.tabs(["📈 Performance Analysis", "🌍 Geographic Analysis", "⏰ Time Analysis", "🎯 Business Intelligence"])
-    
-    with tab1:
-        st.header("Performance Analysis")
+    try:
+        # Load data
+        df = pd.read_csv(uploaded_file)
         
-        col1, col2 = st.columns(2)
+        st.success(f"✅ Data loaded successfully: {df.shape[0]} rows, {df.shape[1]} columns")
+        
+        # Show basic info
+        st.subheader("📊 Dataset Overview")
+        col1, col2, col3 = st.columns(3)
         
         with col1:
-            # Delivery performance distribution
-            if 'delivery_performance' in filtered_df.columns:
-                fig = px.pie(filtered_df, names='delivery_performance', 
-                           title='Delivery Performance Distribution',
-                           color_discrete_map={'Excellent': '#00CC96', 'Good': '#19D3F3', 
-                                             'Average': '#FFA15A', 'Poor': '#EF553B'})
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
+            st.metric("Total Records", f"{len(df):,}")
         with col2:
-            # Rating distribution
-            if 'Delivery_person_Ratings' in filtered_df.columns:
-                fig = px.histogram(filtered_df, x='Delivery_person_Ratings', 
-                                 title='Rating Distribution', nbins=20,
-                                 color_discrete_sequence=['#636EFA'])
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        col3, col4 = st.columns(2)
-        
+            st.metric("Total Columns", f"{len(df.columns)}")
         with col3:
-            # Time distribution
-            if 'Time_taken (min)' in filtered_df.columns:
-                fig = px.histogram(filtered_df, x='Time_taken (min)', 
-                                 title='Delivery Time Distribution', nbins=30,
-                                 color_discrete_sequence=['#FF6692'])
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
+            missing_data = df.isnull().sum().sum()
+            st.metric("Missing Values", f"{missing_data:,}")
+        
+        # Display column names
+        st.subheader("📋 Available Columns")
+        cols_per_row = 4
+        for i in range(0, len(df.columns), cols_per_row):
+            cols = st.columns(cols_per_row)
+            for j, col_name in enumerate(df.columns[i:i+cols_per_row]):
+                with cols[j]:
+                    st.write(f"• {col_name}")
+        
+        st.markdown("---")
+        
+        # Filters
+        st.sidebar.header("🔍 Filters")
+        
+        # City filter
+        if 'City' in df.columns:
+            cities = ['All'] + sorted(df['City'].unique().tolist())
+            selected_city = st.sidebar.selectbox("Select City", cities)
+            if selected_city != 'All':
+                df = df[df['City'] == selected_city]
+        
+        # Weather filter
+        if 'Weather_conditions' in df.columns:
+            weather_options = ['All'] + sorted(df['Weather_conditions'].unique().tolist())
+            selected_weather = st.sidebar.selectbox("Select Weather", weather_options)
+            if selected_weather != 'All':
+                df = df[df['Weather_conditions'] == selected_weather]
+        
+        # Vehicle filter
+        if 'Type_of_vehicle' in df.columns:
+            vehicle_options = ['All'] + sorted(df['Type_of_vehicle'].unique().tolist())
+            selected_vehicle = st.sidebar.selectbox("Select Vehicle Type", vehicle_options)
+            if selected_vehicle != 'All':
+                df = df[df['Type_of_vehicle'] == selected_vehicle]
+        
+        st.sidebar.markdown(f"**Filtered Records: {len(df):,}**")
+        
+        # Main Analysis
+        st.header("📈 Key Performance Indicators")
+        
+        # Calculate metrics
+        col1, col2, col3, col4 = st.columns(4)
+        
+        if 'Time_taken (min)' in df.columns:
+            with col1:
+                avg_time = df['Time_taken (min)'].mean()
+                st.metric("Avg Delivery Time", f"{avg_time:.1f} min")
+        
+        if 'Delivery_person_Ratings' in df.columns:
+            with col2:
+                avg_rating = df['Delivery_person_Ratings'].mean()
+                st.metric("Avg Rating", f"{avg_rating:.2f}/5")
+        
+        if 'Delivery_person_Age' in df.columns:
+            with col3:
+                avg_age = df['Delivery_person_Age'].mean()
+                st.metric("Avg Delivery Person Age", f"{avg_age:.1f} years")
         
         with col4:
-            # Efficiency tier
-            if 'efficiency_tier' in filtered_df.columns:
-                efficiency_counts = filtered_df['efficiency_tier'].value_counts()
-                fig = px.bar(x=efficiency_counts.index, y=efficiency_counts.values,
-                           title='Delivery Efficiency Tiers',
-                           color=efficiency_counts.values,
-                           color_continuous_scale='Viridis')
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-    
-    with tab2:
-        st.header("Geographic Analysis")
+            if 'Time_taken (min)' in df.columns:
+                fast_deliveries = (df['Time_taken (min)'] <= 30).sum()
+                fast_pct = (fast_deliveries / len(df) * 100)
+                st.metric("Fast Deliveries (≤30min)", f"{fast_pct:.1f}%")
         
-        col1, col2 = st.columns(2)
+        # Analysis tabs
+        tab1, tab2, tab3, tab4 = st.tabs(["📊 Basic Stats", "🌍 Categories", "⏰ Time Analysis", "📋 Data Table"])
         
-        with col1:
-            # City performance
-            if 'City' in filtered_df.columns and 'Time_taken (min)' in filtered_df.columns:
-                city_performance = filtered_df.groupby('City')['Time_taken (min)'].mean().sort_values()
-                fig = px.bar(x=city_performance.values, y=city_performance.index,
-                           title='Average Delivery Time by City',
-                           orientation='h',
-                           color=city_performance.values,
-                           color_continuous_scale='RdYlBu_r')
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            # Distance category analysis
-            if 'distance_category' in filtered_df.columns and 'Time_taken (min)' in filtered_df.columns:
-                distance_performance = filtered_df.groupby('distance_category')['Time_taken (min)'].mean()
-                fig = px.bar(x=distance_performance.index, y=distance_performance.values,
-                           title='Average Delivery Time by Distance',
-                           color=distance_performance.values,
-                           color_continuous_scale='Blues')
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        # Weather and traffic impact
-        col3, col4 = st.columns(2)
-        
-        with col3:
-            if 'Weather_conditions' in filtered_df.columns and 'Time_taken (min)' in filtered_df.columns:
-                weather_impact = filtered_df.groupby('Weather_conditions')['Time_taken (min)'].mean().sort_values(ascending=False)
-                fig = px.bar(x=weather_impact.index, y=weather_impact.values,
-                           title='Weather Impact on Delivery Time',
-                           color=weather_impact.values,
-                           color_continuous_scale='Reds')
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        with col4:
-            if 'Road_traffic_density' in filtered_df.columns and 'Time_taken (min)' in filtered_df.columns:
-                traffic_impact = filtered_df.groupby('Road_traffic_density')['Time_taken (min)'].mean().sort_values(ascending=False)
-                fig = px.bar(x=traffic_impact.index, y=traffic_impact.values,
-                           title='Traffic Impact on Delivery Time',
-                           color=traffic_impact.values,
-                           color_continuous_scale='Oranges')
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-    
-    with tab3:
-        st.header("Time Analysis")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Meal period analysis
-            if 'meal_period' in filtered_df.columns and 'Time_taken (min)' in filtered_df.columns:
-                meal_performance = filtered_df.groupby('meal_period')['Time_taken (min)'].mean()
-                fig = px.bar(x=meal_performance.index, y=meal_performance.values,
-                           title='Average Delivery Time by Meal Period',
-                           color=meal_performance.values,
-                           color_continuous_scale='Sunset')
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            # Peak hours analysis
-            if 'order_hour' in filtered_df.columns and 'Time_taken (min)' in filtered_df.columns:
-                hourly_performance = filtered_df.groupby('order_hour')['Time_taken (min)'].mean()
-                fig = px.line(x=hourly_performance.index, y=hourly_performance.values,
-                            title='Average Delivery Time by Hour',
-                            markers=True)
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        col3, col4 = st.columns(2)
-        
-        with col3:
-            # Weekend vs Weekday
-            if 'is_weekend' in filtered_df.columns and 'Time_taken (min)' in filtered_df.columns:
-                weekend_performance = filtered_df.groupby('is_weekend')['Time_taken (min)'].mean()
-                weekend_performance.index = ['Weekday', 'Weekend']
-                fig = px.bar(x=weekend_performance.index, y=weekend_performance.values,
-                           title='Weekend vs Weekday Performance',
-                           color=['#636EFA', '#EF553B'])
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        with col4:
-            # Day of week analysis
-            if 'day_type' in filtered_df.columns and 'Time_taken (min)' in filtered_df.columns:
-                day_performance = filtered_df.groupby('day_type')['Time_taken (min)'].mean()
-                days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-                day_performance = day_performance.reindex([day for day in days_order if day in day_performance.index])
-                fig = px.bar(x=day_performance.index, y=day_performance.values,
-                           title='Performance by Day of Week',
-                           color=day_performance.values,
-                           color_continuous_scale='Viridis')
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-    
-    with tab4:
-        st.header("Business Intelligence")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Customer satisfaction
-            if 'customer_satisfaction' in filtered_df.columns:
-                satisfaction_counts = filtered_df['customer_satisfaction'].value_counts()
-                fig = px.pie(values=satisfaction_counts.values, names=satisfaction_counts.index,
-                           title='Customer Satisfaction Levels',
-                           color_discrete_map={'High': '#00CC96', 'Medium': '#FFA15A', 'Low': '#EF553B'})
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            # Service quality
-            if 'service_quality' in filtered_df.columns:
-                service_counts = filtered_df['service_quality'].value_counts()
-                fig = px.pie(values=service_counts.values, names=service_counts.index,
-                           title='Service Quality Distribution',
-                           color_discrete_map={'Premium': '#FFD700', 'Standard': '#87CEEB', 'Below Standard': '#FFA07A'})
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        col3, col4 = st.columns(2)
-        
-        with col3:
-            # Order complexity
-            if 'order_complexity' in filtered_df.columns:
-                complexity_counts = filtered_df['order_complexity'].value_counts()
-                fig = px.bar(x=complexity_counts.index, y=complexity_counts.values,
-                           title='Order Complexity Distribution',
-                           color=complexity_counts.values,
-                           color_continuous_scale='Plasma')
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        with col4:
-            # Difficulty level impact
-            if 'difficulty_level' in filtered_df.columns and 'Time_taken (min)' in filtered_df.columns:
-                difficulty_impact = filtered_df.groupby('difficulty_level')['Time_taken (min)'].mean()
-                fig = px.bar(x=difficulty_impact.index, y=difficulty_impact.values,
-                           title='Delivery Time by Difficulty Level',
-                           color=difficulty_impact.values,
-                           color_continuous_scale='Reds')
-                fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
-        
-        # Business insights summary
-        st.subheader("🎯 Key Business Insights")
-        
-        insight_col1, insight_col2 = st.columns(2)
-        
-        with insight_col1:
-            st.markdown("""
-            **Performance Summary:**
-            """)
-            if 'delivery_performance' in filtered_df.columns:
-                excellent_pct = (filtered_df['delivery_performance'] == 'Excellent').mean() * 100
-                st.info(f"🎯 {excellent_pct:.1f}% of deliveries are excellent")
+        with tab1:
+            st.subheader("📊 Basic Statistics")
             
-            if 'customer_satisfaction' in filtered_df.columns:
-                high_sat_pct = (filtered_df['customer_satisfaction'] == 'High').mean() * 100
-                st.info(f"😊 {high_sat_pct:.1f}% customers highly satisfied")
+            # Numeric columns analysis
+            numeric_cols = df.select_dtypes(include=[np.number]).columns
+            if len(numeric_cols) > 0:
+                st.write("**Numeric Columns Statistics:**")
+                st.dataframe(df[numeric_cols].describe())
             
-            if 'is_peak_hour' in filtered_df.columns:
-                peak_orders_pct = filtered_df['is_peak_hour'].mean() * 100
-                st.info(f"⏰ {peak_orders_pct:.1f}% orders during peak hours")
+            # Missing values
+            missing_vals = df.isnull().sum()
+            if missing_vals.sum() > 0:
+                st.write("**Missing Values:**")
+                missing_df = missing_vals[missing_vals > 0].reset_index()
+                missing_df.columns = ['Column', 'Missing Count']
+                missing_df['Missing %'] = (missing_df['Missing Count'] / len(df) * 100).round(2)
+                st.dataframe(missing_df)
+            else:
+                st.success("✅ No missing values found!")
         
-        with insight_col2:
-            st.markdown("""
-            **Operational Insights:**
-            """)
-            if 'Time_taken (min)' in filtered_df.columns:
-                avg_time = filtered_df['Time_taken (min)'].mean()
-                st.warning(f"⏱️ Average delivery time: {avg_time:.1f} minutes")
+        with tab2:
+            st.subheader("🌍 Categorical Analysis")
             
-            if 'Delivery_person_Ratings' in filtered_df.columns:
-                avg_rating = filtered_df['Delivery_person_Ratings'].mean()
-                st.success(f"⭐ Average rating: {avg_rating:.2f}/5")
+            categorical_cols = df.select_dtypes(include=['object']).columns
             
-            if 'Festival' in filtered_df.columns:
-                festival_pct = (filtered_df['Festival'] == 'Yes').mean() * 100
-                st.info(f"🎉 {festival_pct:.1f}% orders during festivals")
-    
-    # Data table
-    st.markdown("---")
-    st.header("📋 Raw Data")
-    
-    # Show data with pagination
-    if st.checkbox("Show raw data"):
-        st.dataframe(filtered_df.head(1000))
-        st.info(f"Showing first 1000 rows of {len(filtered_df)} total filtered records")
-    
-    # Download filtered data
-    csv = filtered_df.to_csv(index=False)
-    st.download_button(
-        label="📥 Download filtered data as CSV",
-        data=csv,
-        file_name=f'zomato_filtered_data_{selected_city}_{selected_weather}.csv',
-        mime='text/csv'
-    )
+            for col in categorical_cols[:6]:  # Show first 6 categorical columns
+                if col in df.columns:
+                    st.write(f"**{col} Distribution:**")
+                    value_counts = df[col].value_counts().head(10)
+                    
+                    # Create simple bar chart using st.bar_chart
+                    chart_data = pd.DataFrame({
+                        'Count': value_counts.values
+                    }, index=value_counts.index)
+                    
+                    st.bar_chart(chart_data)
+                    
+                    # Show percentages
+                    percentages = (value_counts / len(df) * 100).round(2)
+                    for idx, (category, count) in enumerate(value_counts.items()):
+                        st.write(f"• {category}: {count:,} ({percentages.iloc[idx]}%)")
+                    
+                    st.markdown("---")
+        
+        with tab3:
+            st.subheader("⏰ Time and Performance Analysis")
+            
+            # Time taken analysis
+            if 'Time_taken (min)' in df.columns:
+                st.write("**Delivery Time Analysis:**")
+                time_data = df['Time_taken (min)']
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Min Time", f"{time_data.min():.0f} min")
+                with col2:
+                    st.metric("Max Time", f"{time_data.max():.0f} min")
+                with col3:
+                    st.metric("Median Time", f"{time_data.median():.1f} min")
+                
+                # Create histogram data
+                hist_data = np.histogram(time_data.dropna(), bins=20)
+                hist_df = pd.DataFrame({
+                    'Frequency': hist_data[0]
+                }, index=[f"{hist_data[1][i]:.0f}-{hist_data[1][i+1]:.0f}" for i in range(len(hist_data[0]))])
+                
+                st.write("**Delivery Time Distribution:**")
+                st.bar_chart(hist_df)
+            
+            # Rating analysis
+            if 'Delivery_person_Ratings' in df.columns:
+                st.write("**Rating Analysis:**")
+                rating_data = df['Delivery_person_Ratings']
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Min Rating", f"{rating_data.min():.1f}")
+                with col2:
+                    st.metric("Max Rating", f"{rating_data.max():.1f}")
+                with col3:
+                    st.metric("Median Rating", f"{rating_data.median():.2f}")
+                
+                # Rating distribution
+                rating_counts = rating_data.value_counts().sort_index()
+                rating_df = pd.DataFrame({
+                    'Count': rating_counts.values
+                }, index=rating_counts.index)
+                
+                st.write("**Rating Distribution:**")
+                st.bar_chart(rating_df)
+            
+            # Performance by categories
+            if 'Weather_conditions' in df.columns and 'Time_taken (min)' in df.columns:
+                st.write("**Average Delivery Time by Weather:**")
+                weather_performance = df.groupby('Weather_conditions')['Time_taken (min)'].mean().sort_values(ascending=False)
+                weather_df = pd.DataFrame({
+                    'Avg Time (min)': weather_performance.values
+                }, index=weather_performance.index)
+                st.bar_chart(weather_df)
+                
+                # Show numbers
+                for weather, time in weather_performance.items():
+                    st.write(f"• {weather}: {time:.1f} minutes")
+        
+        with tab4:
+            st.subheader("📋 Data Table")
+            
+            # Search functionality
+            search_term = st.text_input("🔍 Search in data (case insensitive):")
+            
+            # Show data
+            display_df = df.copy()
+            
+            if search_term:
+                # Search in all string columns
+                string_cols = display_df.select_dtypes(include=['object']).columns
+                mask = pd.Series([False] * len(display_df))
+                
+                for col in string_cols:
+                    mask |= display_df[col].astype(str).str.contains(search_term, case=False, na=False)
+                
+                display_df = display_df[mask]
+                st.write(f"Found {len(display_df)} records matching '{search_term}'")
+            
+            # Pagination
+            rows_per_page = st.selectbox("Rows per page:", [10, 25, 50, 100], index=1)
+            
+            total_pages = len(display_df) // rows_per_page + (1 if len(display_df) % rows_per_page > 0 else 0)
+            
+            if total_pages > 1:
+                page = st.number_input("Page:", min_value=1, max_value=total_pages, value=1)
+                start_idx = (page - 1) * rows_per_page
+                end_idx = start_idx + rows_per_page
+                st.write(f"Showing page {page} of {total_pages} (rows {start_idx + 1} to {min(end_idx, len(display_df))} of {len(display_df)})")
+                st.dataframe(display_df.iloc[start_idx:end_idx])
+            else:
+                st.dataframe(display_df.head(rows_per_page))
+            
+            # Download button
+            csv = display_df.to_csv(index=False)
+            st.download_button(
+                label="📥 Download filtered data as CSV",
+                data=csv,
+                file_name="zomato_filtered_data.csv",
+                mime="text/csv"
+            )
+        
+        # Summary insights
+        st.markdown("---")
+        st.subheader("🎯 Key Insights")
+        
+        insights = []
+        
+        if 'Time_taken (min)' in df.columns:
+            avg_time = df['Time_taken (min)'].mean()
+            if avg_time <= 25:
+                insights.append(f"✅ Excellent average delivery time: {avg_time:.1f} minutes")
+            elif avg_time <= 35:
+                insights.append(f"⚠️ Moderate average delivery time: {avg_time:.1f} minutes")
+            else:
+                insights.append(f"❌ High average delivery time: {avg_time:.1f} minutes - needs improvement")
+        
+        if 'Delivery_person_Ratings' in df.columns:
+            avg_rating = df['Delivery_person_Ratings'].mean()
+            if avg_rating >= 4.5:
+                insights.append(f"⭐ Excellent average rating: {avg_rating:.2f}/5")
+            elif avg_rating >= 4.0:
+                insights.append(f"👍 Good average rating: {avg_rating:.2f}/5")
+            else:
+                insights.append(f"👎 Low average rating: {avg_rating:.2f}/5 - needs attention")
+        
+        if 'City' in df.columns:
+            most_active_city = df['City'].mode()[0]
+            city_count = (df['City'] == most_active_city).sum()
+            insights.append(f"🏙️ Most active city: {most_active_city} ({city_count:,} orders)")
+        
+        if 'Weather_conditions' in df.columns:
+            most_common_weather = df['Weather_conditions'].mode()[0]
+            weather_count = (df['Weather_conditions'] == most_common_weather).sum()
+            insights.append(f"🌤️ Most common weather: {most_common_weather} ({weather_count:,} orders)")
+        
+        for insight in insights:
+            st.write(insight)
+        
+    except Exception as e:
+        st.error(f"Error loading data: {str(e)}")
+        st.write("Please make sure your CSV file is properly formatted.")
 
 else:
-    st.info("Please upload your Zomato delivery dataset to get started!")
+    st.info("👆 Please upload your Zomato delivery dataset to start the analysis!")
+    
     st.markdown("""
-    ### Expected CSV Format:
-    Your CSV file should contain the following columns:
-    - Time_taken (min)
-    - Delivery_person_Ratings
-    - Delivery_person_Age
-    - City
-    - Weather_conditions
-    - Road_traffic_density
-    - Type_of_vehicle
-    - Type_of_order
-    - Festival
-    - delivery_performance
-    - customer_satisfaction
-    - meal_period
-    - efficiency_tier
-    - And other features created by the feature engineering process
+    ### 📋 Instructions:
+    
+    1. **Upload your CSV file** using the file uploader above
+    2. **Use the sidebar filters** to filter your data
+    3. **Explore different tabs** for various analyses
+    4. **Download filtered results** from the Data Table tab
+    
+    ### 📊 Expected Columns:
+    - `Time_taken (min)` - Delivery time
+    - `Delivery_person_Ratings` - Ratings (1-5)
+    - `City` - Delivery city
+    - `Weather_conditions` - Weather conditions
+    - `Type_of_vehicle` - Vehicle type
+    - And any other columns from your dataset
     """)
 
 # Footer
 st.markdown("---")
-st.markdown("""
-<div style='text-align: center'>
-<p>🍕 Zomato Delivery Analytics Dashboard | Built with Streamlit</p>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("🍕 **Zomato Delivery Dashboard** | Built with Streamlit")
